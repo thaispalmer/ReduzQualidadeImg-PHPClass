@@ -1,4 +1,5 @@
 <?php
+namespace app\helpers;
 
 class ReduzQualidadeImg {
     private $imagemOriginal;
@@ -17,7 +18,7 @@ class ReduzQualidadeImg {
     public $arquivoOrigem;
     private $tipo;
     private $tamanho;
-    
+
     public $mantemTransparencia = true;
 
 
@@ -65,7 +66,7 @@ class ReduzQualidadeImg {
         }
         imagecopyresampled($this->imagemFinal,$this->imagemOriginal,0,0,0,0,$this->larguraFinal,$this->alturaFinal,$this->larguraOriginal,$this->alturaOriginal);
     }
-    
+
     private function calculaQualidade() {
         $this->qualidade = 100;
         $arquivoTemporario = tempnam(sys_get_temp_dir(), 'img');
@@ -86,11 +87,11 @@ class ReduzQualidadeImg {
         }
         else {
             if ($this->tamanho <= $this->tamanhoMaximo) return 0;
-            $this->imagemFinal = $this->imagem;
+            $this->imagemFinal = $this->imagemOriginal;
         }
 
         if ((($this->tipo == IMAGETYPE_PNG) || ($this->tipo == IMAGETYPE_GIF)) && ($this->mantemTransparencia)) {
-            if (!$this->imagemFinal) $this->imagemFinal = $this->imagem;
+            if (!$this->imagemFinal) $this->imagemFinal = $this->imagemOriginal;
             return 1;
         }
 
@@ -157,6 +158,7 @@ class ReduzQualidadeImg {
                 break;
 
             case 5:
+            default:
                 $xWatermark = ($this->larguraFinal - $larguraFinalWatermark) / 2;
                 $yWatermark = ($this->alturaFinal - $alturaFinalWatermark) / 2;
                 break;
@@ -179,7 +181,6 @@ class ReduzQualidadeImg {
             case 9:
                 $xWatermark = $this->larguraFinal - $larguraFinalWatermark;
                 $yWatermark = $this->alturaFinal - $alturaFinalWatermark;
-                break;
         }
 
         if ($this->mantemTransparencia) {
@@ -198,10 +199,9 @@ class ReduzQualidadeImg {
         return 1;
     }
 
-    public function salvar($arquivoDestino,$forcarSalvamento = false) {
+    public function salvar($arquivoDestino) {
         if (!$this->imagemFinal) {
-            if (!$forcarSalvamento) return false;
-            else return copy($this->arquivoOrigem,$arquivoDestino);
+            return copy($this->arquivoOrigem,$arquivoDestino);
         }
 
         if ($this->mantemTransparencia) {
@@ -221,7 +221,7 @@ class ReduzQualidadeImg {
         imagejpeg($this->imagemFinal,$arquivoDestino,$this->qualidade);
         return true;
     }
-    
+
     public function salvarMiniatura($arquivoDestino,$larguraMiniatura,$alturaMiniatura) {
         if (!$this->abreImg()) return false;
 
@@ -275,5 +275,18 @@ class ReduzQualidadeImg {
 
         imagejpeg($imagemFinal,$arquivoDestino,75);
         return true;
+    }
+
+    public function pegarMiniatura($larguraMiniatura,$alturaMiniatura)
+    {
+        $caminhoTemporario = tempnam(sys_get_temp_dir(), 'img');
+        $this->salvarMiniatura($caminhoTemporario, $larguraMiniatura, $alturaMiniatura);
+        if (file_exists($caminhoTemporario))
+        {
+            $conteudoMiniatura = file_get_contents($caminhoTemporario);
+            unlink($caminhoTemporario);
+            return $conteudoMiniatura;
+        }
+        return false;
     }
 }
